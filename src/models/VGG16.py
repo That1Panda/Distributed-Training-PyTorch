@@ -2,13 +2,17 @@ import torch
 import torch.nn as nn
 import yaml
 
+from configs.cfg import VGG16_CONFIG_PATH
+
 
 class VGG16(nn.Module):
-    def __init__(self, input_channels, input_width, input_height, num_classes):
+    def __init__(self, config=None):
         super(VGG16, self).__init__()
-
+        self.config = (
+            yaml.safe_load(open(VGG16_CONFIG_PATH)) if config is None else config
+        )
         self.features = nn.Sequential(
-            nn.Conv2d(input_channels, 64, kernel_size=3, padding=1),
+            nn.Conv2d(self.config["input_channels"], 64, kernel_size=3, padding=1),
             nn.ReLU(inplace=True),
             nn.Conv2d(64, 64, kernel_size=3, padding=1),
             nn.ReLU(inplace=True),
@@ -42,7 +46,9 @@ class VGG16(nn.Module):
         )
 
         self._flattened_feature_size = self._get_flattened_feature_size(
-            input_channels, input_width, input_height
+            self.config["input_channels"],
+            self.config["input_width"],
+            self.config["input_height"],
         )
 
         self.classifier = nn.Sequential(
@@ -52,7 +58,7 @@ class VGG16(nn.Module):
             nn.Linear(4096, 4096),
             nn.ReLU(inplace=True),
             nn.Dropout(),
-            nn.Linear(4096, num_classes),
+            nn.Linear(4096, self.config["num_classes"]),
         )
 
     def _get_flattened_feature_size(self, input_channels, input_width, input_height):

@@ -14,25 +14,22 @@ def load_test_data():
 
     for sample in test_data:
         yield (
-            sample["batch_size"],
-            sample["channels"],
-            sample["height"],
-            sample["width"],
-            sample["num_classes"],
+            sample["config"],
             sample["response"],
         )
 
 
 class TestVGG16:
-    @pytest.mark.parametrize(
-        "batch_size, channels, height, width, num_classes, response", load_test_data()
-    )
-    def test_vgg16_model(
-        self, batch_size, channels, height, width, num_classes, response
-    ):
-        model = VGG16(channels, width, height, num_classes)
-        x = torch.randn(batch_size, channels, height, width)
+    @pytest.mark.parametrize("config, response", load_test_data())
+    def test_vgg16_model(self, config, response):
+        model = VGG16(config)
+        x = torch.randn(
+            config["batch_size"],
+            config["input_channels"],
+            config["input_height"],
+            config["input_width"],
+        )
         y = model(x)
-        assert y.size()[0] == batch_size
-        assert y.size()[1] == num_classes
+        assert y.size()[0] == config["batch_size"]
+        assert y.size()[1] == config["num_classes"]
         assert len(y.size()) == len(response)
