@@ -1,0 +1,76 @@
+datasets:
+  CIFAR10:
+    batch_size: 128
+    num_workers: 2
+    download: True
+    transforms:
+      train:
+        - name: RandomCrop
+          size: 32
+          padding: 4
+        - name: RandomHorizontalFlip
+        - name: ToTensor
+        - name: Normalize
+          mean: [0.4914, 0.4822, 0.4465]
+          std: [0.2023, 0.1994, 0.2010]
+      test:
+        - name: ToTensor
+        - name: Normalize
+          mean: [0.4914, 0.4822, 0.4465]
+          std: [0.2023, 0.1994, 0.2010]
+
+  MNIST:
+    batch_size: 64
+    num_workers: 4
+    download: True
+    transforms:
+      train:
+        - name: ToTensor
+        - name: Normalize
+          mean: [0.1307]
+          std: [0.3081]
+      test:
+        - name: ToTensor
+        - name: Normalize
+          mean: [0.1307]
+          std: [0.3081]
+
+  FashionMNIST:
+    batch_size: 128
+    num_workers: 2
+    download: True
+    transforms:
+      train:
+        - name: RandomCrop
+          size: 28
+          padding: 4
+        - name: RandomHorizontalFlip
+        - name: ToTensor
+        - name: Normalize
+          mean: [0.2860, 0.3530, 0.3210]
+          std: [0.3530, 0.3680, 0.3610]
+      test:
+        - name: ToTensor
+        - name: Normalize
+          mean: [0.2860, 0.3530, 0.3210]
+          std: [0.3530, 0.3680, 0.3610]
+
+  SVHN:
+    batch_size: 128
+    num_workers: 4
+    download: True
+    transforms:
+      train:
+        - name: RandomCrop
+          size: 32
+          padding: 4
+        - name: RandomHorizontalFlip
+        - name: ToTensor
+        - name: Normalize
+          mean: [0.4377, 0.4439, 0.4728]
+          std: [0.1980, 0.2010, 0.1970]
+      test:
+        - name: ToTensor
+        - name: Normalize
+          mean: [0.4377, 0.4439, 0.4728]
+          std: [0.1980, 0.2010, 0.1970]
