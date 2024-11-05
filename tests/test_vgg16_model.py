@@ -5,7 +5,7 @@ from configs.cfg import TEST_DATA_DIR
 from src.models.VGG16 import VGG16
 import torch
 
-DATA_FILE = TEST_DATA_DIR / "data" / "vgg16_model.json"
+DATA_FILE = TEST_DATA_DIR / "vgg16_model.json"
 
 
 def load_test_data():
