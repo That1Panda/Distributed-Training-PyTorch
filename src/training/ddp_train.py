@@ -1,28 +1,43 @@
+import os
 import torch
 import torch.optim as optim
 import torch.nn as nn
+import torch.distributed as dist
+from torch.utils.data import DistributedSampler, DataLoader
+from torch.nn.parallel import DistributedDataParallel as DDP
 from torch.utils.tensorboard import SummaryWriter
 from src.models.VGG16 import VGG16
 from src.data_processing.data_preprocessing import Data_Preprocessing
-from configs.cfg import DATA_PARALLEL_CONFIG_PATH, LOG_DIR
+from configs.cfg import DDP_CONFIG_PATH, LOG_DIR
 import yaml
 import time
 
 
-class DataParallelTrain:
-    def __init__(self, config=None):
+class DDPTrain:
+    def __init__(self, rank, config=None):
+        self.rank = rank
         self.config = (
-            yaml.safe_load(open(DATA_PARALLEL_CONFIG_PATH))["config"]
+            yaml.safe_load(open(DDP_CONFIG_PATH))["config"]
             if config is None
             else config
         )
-        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        self.device = torch.device(f"cuda:{self.rank}")
         self.time_of_training = 0
         self.train_accuracy = 0
         self.val_accuracy = 0
 
+        self.setup()
+
+    def setup(self):
+        dist.init_process_group(backend="nccl")
+        torch.cuda.set_device(self.rank)
+
+    def cleanup(self):
+        dist.destroy_process_group()
+
     def train(self, model, train_data, criterion, optimizer, epoch, writer):
         model.train()
+        train_data.sampler.set_epoch(epoch)
         running_loss = 0.0
         correct = 0
         total = 0
@@ -41,7 +56,10 @@ class DataParallelTrain:
             total += labels.size(0)
             correct += predicted.eq(labels).sum().item()
 
-            if (batch_idx + 1) % self.config["training"]["log_interval"] == 0:
+            if (
+                self.rank == 0
+                and (batch_idx + 1) % self.config["training"]["log_interval"] == 0
+            ):
                 print(
                     f"Train Epoch: {epoch+1} [{batch_idx*len(inputs)}/{len(train_data.dataset)}] "
                     f"Loss: {loss.item():.3f} Accuracy: {100.*correct/total:.3f}"
@@ -49,9 +67,9 @@ class DataParallelTrain:
 
             if self.device.type == "cpu":
                 break  # For CI/CD only run one batch
-
-        writer.add_scalar("training_loss", running_loss / len(train_data), epoch)
-        writer.add_scalar("training_accuracy", 100.0 * correct / total, epoch)
+        if self.rank == 0:
+            writer.add_scalar("training_loss", running_loss / len(train_data), epoch)
+            writer.add_scalar("training_accuracy", 100.0 * correct / total, epoch)
 
         return 100.0 * correct / total
 
@@ -78,24 +96,25 @@ class DataParallelTrain:
 
             val_loss = running_loss / len(test_data)
             accuracy = 100.0 * correct / total
-            print(
-                f"\nValidation set: Average loss: {val_loss:.4f}, Accuracy: {correct}/{total} ({accuracy:.2f}%)\n"
-            )
 
-            writer.add_scalar("validation_loss", val_loss, epoch)
-            writer.add_scalar("validation_accuracy", accuracy, epoch)
+            if self.rank == 0:
+                print(
+                    f"\nValidation set: Average loss: {val_loss:.4f}, Accuracy: {correct}/{total} ({accuracy:.2f}%)\n"
+                )
+
+                writer.add_scalar("validation_loss", val_loss, epoch)
+                writer.add_scalar("validation_accuracy", accuracy, epoch)
 
             return accuracy
 
     def model_training(self):
         data = Data_Preprocessing(self.config["data"]["dataset_name"])
-        # data.config[
-        #     "batch_size"
-        # ] *= (
-        #     torch.cuda.device_count()
-        # )  # since data parallel splits the batch across GPUs
-
         train_data, test_data = data.get_dataloader()
+        train_data = DataLoader(
+            train_data.dataset,
+            batch_size=train_data.batch_size,
+            sampler=DistributedSampler(train_data.dataset),
+        )
         print("Data Preprocessing Done")
 
         model = (
@@ -103,13 +122,18 @@ class DataParallelTrain:
             if self.config["model"]["type"] == "VGG16"
             else None
         )
-        model = nn.DataParallel(model)
         model = model.to(self.device)
+        model = DDP(model, device_ids=[self.rank])
         print("Model Created with Data Parallel")
 
         criterion = nn.CrossEntropyLoss()
         optimizer = optim.Adam(model.parameters(), lr=self.config["training"]["lr"])
-        writer = SummaryWriter(log_dir=LOG_DIR / "data_parallel_train")
+        writer = (
+            SummaryWriter(log_dir=LOG_DIR / "data_parallel_train")
+            if self.rank == 0
+            else None
+        )
+
         print("Training Started")
         start_time = time.time()
 
@@ -123,7 +147,10 @@ class DataParallelTrain:
         self.train_accuracy = train_acc
         self.val_accuracy = val_acc
 
-        print(f"Training Time: {self.time_of_training}")
-        print(f"Final Training Accuracy: {self.train_accuracy}")
-        print(f"Final Validation Accuracy: {self.val_accuracy}")
-        writer.close()
+        if self.rank == 0:
+            print(f"Training Time: {self.time_of_training}")
+            print(f"Final Training Accuracy: {self.train_accuracy}")
+            print(f"Final Validation Accuracy: {self.val_accuracy}")
+            writer.close()
+
+        self.cleanup()
