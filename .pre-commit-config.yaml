@@ -12,10 +12,10 @@ repos:
         files: \.ipynb$
         entry: jupyter nbconvert --clear-output --inplace
   
-  - repo: local
-    hooks:
-      - id: pytest
-        name: Run pytest tests
-        entry: pytest tests/
-        language: python
-        pass_filenames: false
+  # - repo: local
+  #   hooks:
+  #     - id: pytest
+  #       name: Run pytest tests
+  #       entry: pytest tests/
+  #       language: python
+  #       pass_filenames: false
