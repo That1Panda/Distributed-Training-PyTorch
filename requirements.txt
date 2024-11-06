@@ -3,3 +3,4 @@ PyYAML==6.0.2
 torch==2.2.2
 torchvision==0.17.2
 tqdm==4.66.6
+numpy==1.26.4
