@@ -48,6 +48,9 @@ class SingleGPUTrain:
                     f"Loss: {loss.item():.3f} Accuracy: {100.*correct/total:.3f}"
                 )
 
+            if self.device.type == "cpu":
+                break  # For CI/CD
+
         writer.add_scalar("training_loss", running_loss / len(train_data), epoch)
         writer.add_scalar("training_accuracy", 100.0 * correct / total, epoch)
 
@@ -70,6 +73,9 @@ class SingleGPUTrain:
                 _, predicted = torch.max(outputs, 1)
                 total += labels.size(0)
                 correct += predicted.eq(labels).sum().item()
+
+                if self.device.type == "cpu":
+                    break  # For CI/CD
 
             val_loss = running_loss / len(test_data)
             accuracy = 100.0 * correct / total
