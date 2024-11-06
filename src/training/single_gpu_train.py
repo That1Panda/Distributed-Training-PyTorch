@@ -82,6 +82,8 @@ class SingleGPUTrain:
         data = Data_Preprocessing(self.config["data"]["dataset_name"])
         print("Data Preprocessing Done")
         train_data, test_data = data.get_dataloader()
+        model.set_config_from_dataloader(train_data)
+
         criterion = nn.CrossEntropyLoss()
         optimizer = optim.Adam(model.parameters(), lr=self.config["training"]["lr"])
         writer = SummaryWriter(log_dir=LOG_DIR / "single_gpu_train")

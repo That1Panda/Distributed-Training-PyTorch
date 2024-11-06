@@ -67,6 +67,13 @@ class VGG16(nn.Module):
             features_out = self.features(dummy_input)
             return features_out.numel()  # Total number of elements in the output tensor
 
+    def set_config_from_dataloader(self, dataloader):
+        for images, _ in dataloader:
+            _, channel, width, height = images.shape
+        self.config["input_channels"] = channel
+        self.config["input_width"] = width
+        self.config["input_height"] = height
+
     def forward(self, x):
         x = self.features(x)
         x = torch.flatten(x, 1)
