@@ -1,6 +1,6 @@
 datasets:
   CIFAR10:
-    batch_size: 1024
+    batch_size: 128
     num_workers: 2
     download: True
     transforms:
