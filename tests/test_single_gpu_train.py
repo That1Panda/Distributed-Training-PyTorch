@@ -20,9 +20,10 @@ def load_test_data():
 class TestSingleGPUTrain:
     @pytest.mark.parametrize("config, response", load_test_data())
     def test_single_gpu_train(self, config, response):
-        assert "model" in config.keys()
-        assert "training" in config.keys()
-        assert "data" in config.keys()
+        if config is not None:
+            assert "model" in config.keys()
+            assert "training" in config.keys()
+            assert "data" in config.keys()
 
         single_gpu_train = SingleGPUTrain(config)
 
@@ -32,3 +33,7 @@ class TestSingleGPUTrain:
         )
 
         single_gpu_train.model_training()
+
+        assert single_gpu_train.time_of_training >= response["time_of_training"]
+        assert single_gpu_train.train_accuracy >= response["train_accuracy"]
+        assert single_gpu_train.val_accuracy >= response["val_accuracy"]

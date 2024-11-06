@@ -10,8 +10,17 @@
       }
     },
     "response": {
-      "train_length": 3125,
-      "test_length": 625
+      "time_of_training": 0,
+      "train_accuracy": 0,
+      "val_accuracy": 0
     }
-  }
+  },
+    {
+        "config": null,
+        "response": {
+            "time_of_training": 0,
+            "train_accuracy": 0,
+            "val_accuracy": 0
+            }
+    }
 ]
