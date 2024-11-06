@@ -1,0 +1,17 @@
+[
+  {
+    "config": {
+      "model": { "type": "VGG16" },
+      "data": { "dataset_name": "CIFAR10" },
+      "training": {
+        "epochs": 1,
+        "lr": 0.01,
+        "log_interval": 50
+      }
+    },
+    "response": {
+      "train_length": 3125,
+      "test_length": 625
+    }
+  }
+]
