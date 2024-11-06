@@ -75,14 +75,16 @@ class SingleGPUTrain:
             writer.add_scalar("validation_accuracy", accuracy, epoch)
 
     def model_training(self):
+        data = Data_Preprocessing(self.config["data"]["dataset_name"])
+        train_data, test_data = data.get_dataloader()
+        print("Data Preprocessing Done")
+
         model = (
-            VGG16().to(self.device) if self.config["model"]["type"] == "VGG16" else None
+            VGG16(data.get_model_config()).to(self.device)
+            if self.config["model"]["type"] == "VGG16"
+            else None
         )
         print("Model Created")
-        data = Data_Preprocessing(self.config["data"]["dataset_name"])
-        print("Data Preprocessing Done")
-        train_data, test_data = data.get_dataloader()
-        model.set_config_from_dataloader(train_data)
 
         criterion = nn.CrossEntropyLoss()
         optimizer = optim.Adam(model.parameters(), lr=self.config["training"]["lr"])
