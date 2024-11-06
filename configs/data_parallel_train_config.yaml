@@ -4,7 +4,7 @@ config:
   data:
     dataset_name: CIFAR10
   training:
-    epochs: 1
+    epochs: 3
     lr: 0.001
     log_interval: 50
 
