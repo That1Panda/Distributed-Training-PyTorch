@@ -89,6 +89,9 @@ class DataParallelTrain:
 
     def model_training(self):
         data = Data_Preprocessing(self.config["data"]["dataset_name"])
+        data.config.batch_size *= (
+            torch.cuda.device_count()
+        )  # since data parallel splits the batch across GPUs
         train_data, test_data = data.get_dataloader()
         print("Data Preprocessing Done")
 
