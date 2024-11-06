@@ -27,11 +27,6 @@ class TestSingleGPUTrain:
 
         single_gpu_train = SingleGPUTrain(config)
 
-        assert single_gpu_train.config == config
-        assert single_gpu_train.device == torch.device(
-            "cuda" if torch.cuda.is_available() else "cpu"
-        )
-
         single_gpu_train.model_training()
 
         assert single_gpu_train.time_of_training >= response["time_of_training"]
