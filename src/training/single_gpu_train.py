@@ -38,7 +38,7 @@ class SingleGPUTrain:
             total += labels.size(0)
             correct += predicted.eq(labels).sum().item()
 
-            if (batch_idx + 1) % self.config["log_interval"] == 0:
+            if (batch_idx + 1) % self.config["training"]["log_interval"] == 0:
                 print(
                     f"Train Epoch: {epoch+1} [{batch_idx*len(inputs)}/{len(train_data.dataset)}] "
                     f"Loss: {loss.item():.3f} Accuracy: {100.*correct/total:.3f}"
