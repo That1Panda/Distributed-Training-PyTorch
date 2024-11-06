@@ -1,0 +1,9 @@
+config:
+  model:
+    type: VGG16
+  data:
+    dataset_name: CIFAR10
+  training:
+    epochs: 1
+    lr: 0.001
+    log_interval: 50
