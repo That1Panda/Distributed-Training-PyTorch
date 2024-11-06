@@ -84,7 +84,7 @@ class Data_Preprocessing:
 
     def get_model_config(self):
         train_dataloader, test_dataloader = self.get_dataloader()
-        for _, labels in train_dataloader:
+        for images, _ in train_dataloader:
             _, c, h, w = images.size()
             break
 
