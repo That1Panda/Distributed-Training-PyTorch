@@ -7,6 +7,7 @@ from src.data_processing.data_preprocessing import Data_Preprocessing
 from configs.cfg import SINGLE_GPU_TRAIN_CONFIG_PATH, LOG_DIR
 from tqdm import tqdm
 import yaml
+import time
 
 
 class SingleGPUTrain:
@@ -17,6 +18,9 @@ class SingleGPUTrain:
             else config
         )
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        self.time_of_training = 0
+        self.train_accuracy = 0
+        self.val_accuracy = 0
 
     def train(self, model, train_data, criterion, optimizer, epoch, writer):
         model.train()
@@ -47,6 +51,8 @@ class SingleGPUTrain:
         writer.add_scalar("training_loss", running_loss / len(train_data), epoch)
         writer.add_scalar("training_accuracy", 100.0 * correct / total, epoch)
 
+        return 100.0 * correct / total
+
     def validate(self, model, test_data, criterion, epoch, writer):
         model.eval()
         running_loss = 0.0
@@ -74,6 +80,8 @@ class SingleGPUTrain:
             writer.add_scalar("validation_loss", val_loss, epoch)
             writer.add_scalar("validation_accuracy", accuracy, epoch)
 
+            return accuracy
+
     def model_training(self):
         data = Data_Preprocessing(self.config["data"]["dataset_name"])
         train_data, test_data = data.get_dataloader()
@@ -90,8 +98,19 @@ class SingleGPUTrain:
         optimizer = optim.Adam(model.parameters(), lr=self.config["training"]["lr"])
         writer = SummaryWriter(log_dir=LOG_DIR / "single_gpu_train")
         print("Training Started")
-        for epoch in range(self.config["training"]["epochs"]):
-            self.train(model, train_data, criterion, optimizer, epoch, writer)
-            self.validate(model, test_data, criterion, epoch, writer)
+        start_time = time.time()
 
+        for epoch in range(self.config["training"]["epochs"]):
+            train_acc = self.train(
+                model, train_data, criterion, optimizer, epoch, writer
+            )
+            val_acc = self.validate(model, test_data, criterion, epoch, writer)
+
+        self.time_of_training = time.time() - start_time
+        self.train_accuracy = train_acc
+        self.val_accuracy = val_acc
+
+        print(f"Training Time: {self.time_of_training}")
+        print(f"Final Training Accuracy: {self.train_accuracy}")
+        print(f"Final Validation Accuracy: {self.val_accuracy}")
         writer.close()
