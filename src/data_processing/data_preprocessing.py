@@ -81,3 +81,16 @@ class Data_Preprocessing:
         )
 
         return train_dataloader, test_dataloader
+
+    def get_model_config(self):
+        train_dataloader, test_dataloader = self.get_dataloader()
+        for images, _ in train_dataloader:
+            _, c, h, w = images.size()
+            break
+
+        return {
+            "input_channels": c,
+            "input_height": h,
+            "input_width": w,
+            "num_classes": len(train_dataloader.dataset.classes),
+        }
